@@ -71,13 +71,33 @@
     }
 }
 
-- (UIImage*) makeImage: (UIImage*)image withTint: (UIColor*)color {
+(* - (UIImage*) makeImage: (UIImage*)image withTint: (UIColor*)color {
     UIImage* newImage = [image imageWithRenderingMode: UIImageRenderingModeAlwaysTemplate];
     UIGraphicsBeginImageContextWithOptions(image.size, NO, newImage.scale);
     [color set];
     [newImage drawInRect: CGRectMake(0, 0, image.size.width, newImage.size.height)];
     newImage = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
+    return newImage;
+} *)
+
+- (UIImage*)makeImage:(UIImage *)image withTint:(UIColor *)color {
+    UIImage *newImage = [image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    if (@available(iOS 10.0, *)) {
+        UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:image.size];
+        newImage = [renderer imageWithActions:^(UIGraphicsImageRendererContext * _Nonnull rendererContext) {
+            [color setFill];
+            [newImage drawInRect:CGRectMake(0, 0, image.size.width, newImage.size.height)];
+        }];
+    } else {
+        // Fallback on earlier versions
+        UIGraphicsBeginImageContextWithOptions(image.size, NO, 0);
+            CGContextRef context = UIGraphicsGetCurrentContext();
+            [color setFill];
+            CGContextFillRect(context, CGRectMake(0, 0, image.size.width, image.size.height));
+            newImage = UIGraphicsGetImageFromCurrentImageContext();
+            UIGraphicsEndImageContext();
+    }
     return newImage;
 }
 
